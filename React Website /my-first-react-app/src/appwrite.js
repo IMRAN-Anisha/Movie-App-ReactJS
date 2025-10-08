@@ -28,12 +28,13 @@ export const updateSearchCount = async (searchTerm, movie) => {
    })
   // 3. If it doesn't, create a new document with the search term and count as 1
   } else {
-   await database.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
+    await database.createDocument(DATABASE_ID, COLLECTION_ID, ID.unique(), {
     searchTerm,
     count: 1,
-    movie_id: movie.id,
-    poster_url: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
-   })
+    movie_id: movie?.id || null,
+    poster_url: movie?.poster_path ? `https://image.tmdb.org/t/p/w500${movie.poster_path}` : "",
+    })
+
   }
  } catch (error) {
   console.error(error);

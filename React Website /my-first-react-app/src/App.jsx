@@ -4,7 +4,6 @@ import Search from "./components/search";
 import LoadingSpinner from "./components/spinner";
 import MovieCard from "./components/MovieCard";
 import {useDebounce} from 'react-use'
-import { Client, Account } from "appwrite";
 import { getTrendingMovies, updateSearchCount } from './appwrite.js'
 
 //API = application programming interface - a set of rules that allows one software application to interact with another
