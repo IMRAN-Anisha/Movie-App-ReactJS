@@ -2,6 +2,7 @@ import React, { use } from "react";
 import { useEffect, useState } from "react";
 import Search from "./components/search";
 import LoadingSpinner from "./components/spinner";
+import MovieCard from "./components/MovieCard";
 
 //API = application programming interface - a set of rules that allows one software application to interact with another
 const API_BASE_URL = "https://api.themoviedb.org/3";
@@ -68,7 +69,7 @@ const App = () => {
         ) : (
           <ul>
               {movieList.map((movie) => (
-                <p key ={movie.id} className="text-white">{movie.title}</p> // Use movie.id as a unique key to avoid key warnings
+                <MovieCard key={movie.id} movie={movie} />
               ))}
           </ul>
         )}
