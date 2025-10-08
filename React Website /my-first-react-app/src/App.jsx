@@ -3,6 +3,34 @@ import { useEffect, useState } from "react";
 import Search from "./components/search";
 import LoadingSpinner from "./components/spinner";
 import MovieCard from "./components/MovieCard";
+import {useDebounce} from 'react-use'
+import { Client, Account } from "appwrite";
+import { updateSearchCount } from "./appwrite";
+
+/**********************
+ A P P W R I T E
+************************/ 
+const client = new Client()
+  .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
+  .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
+
+const account = new Account(client);
+
+const pingAppwrite = async () => {
+  try {
+    const response = await account.get();
+    console.log("✅ Appwrite ping successful:", response);
+    alert("Ping successful! Check console.");
+  } catch (err) {
+    console.error("❌ Appwrite ping failed:", err);
+    alert("Ping failed! Check console.");
+  }
+};
+
+<button onClick={pingAppwrite}>Send a ping</button>
+/**********************
+ E N D   A P P W R I T E
+************************/
 
 //API = application programming interface - a set of rules that allows one software application to interact with another
 const API_BASE_URL = "https://api.themoviedb.org/3";
@@ -19,14 +47,34 @@ const App = () => {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState(null);
   const [movieList, setMovieList] = React.useState([]);
-  const [isLoading, setIsLoading] = React.useState(false);
 
-  const fetchMovies = async (query) => {
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+
+  //debounced search term to limit API calls by waiting for user to stop typing for 500ms
+  useDebounce( () => {setDebouncedSearchTerm(searchTerm); ms:500, [searchTerm]});
+  /**************************************
+          MENTION IN INTERVIEWS
+   **************************************/
+  /*
+  optimizing API calls with debouncing:
+  modular coding by using components to avoid repetition
+  error handling with try-catch blocks
+  loading state management for better UX
+  use of environment variables for sensitive data
+  responsive design with utility-first CSS (Tailwind CSS)
+  performance optimization by minimizing re-renders
+  appwrite for backend services
+  */
+  const fetchMovies = async (query='') => {
     setIsLoading(true);
     setErrorMessage("");
 
     try {
-      const endpoint = `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
+      const endpoint = query
+      ? `${API_BASE_URL}/search/movie?query=${encodeURIComponent(query)}` //encodeURIComponent to handle special characters in the search term
+      : `${API_BASE_URL}/discover/movie?sort_by=popularity.desc`;
+
       const response = await fetch(endpoint, API_OPTIONS);
       if (!response.ok) {
         throw new Error("Network response was not ok");
@@ -39,6 +87,7 @@ const App = () => {
       }  
 
       setMovieList(data.results || []);
+      updateSearchCount();
     } catch (error) {
       console.error("Error fetching movies:", error);
       setErrorMessage("Failed to fetch movies. Please try again later.");
@@ -48,8 +97,8 @@ const App = () => {
   };
 
   useEffect(() => {
-    fetchMovies();
-  }, []);
+    fetchMovies(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
 
   return (
     <main>
