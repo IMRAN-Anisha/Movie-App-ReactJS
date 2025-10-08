@@ -1,1 +1,2 @@
-# React App Projects - JSMAstery Youtube Tutorial
+# React App Projects 
+JSMastery Youtube Tutorial
