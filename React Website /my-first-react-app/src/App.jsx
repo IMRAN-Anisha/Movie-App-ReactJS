@@ -5,32 +5,7 @@ import LoadingSpinner from "./components/spinner";
 import MovieCard from "./components/MovieCard";
 import {useDebounce} from 'react-use'
 import { Client, Account } from "appwrite";
-import { updateSearchCount } from "./appwrite";
-
-/**********************
- A P P W R I T E
-************************/ 
-const client = new Client()
-  .setEndpoint(import.meta.env.VITE_APPWRITE_ENDPOINT)
-  .setProject(import.meta.env.VITE_APPWRITE_PROJECT_ID);
-
-const account = new Account(client);
-
-const pingAppwrite = async () => {
-  try {
-    const response = await account.get();
-    console.log("✅ Appwrite ping successful:", response);
-    alert("Ping successful! Check console.");
-  } catch (err) {
-    console.error("❌ Appwrite ping failed:", err);
-    alert("Ping failed! Check console.");
-  }
-};
-
-<button onClick={pingAppwrite}>Send a ping</button>
-/**********************
- E N D   A P P W R I T E
-************************/
+import { getTrendingMovies, updateSearchCount } from './appwrite.js'
 
 //API = application programming interface - a set of rules that allows one software application to interact with another
 const API_BASE_URL = "https://api.themoviedb.org/3";
@@ -47,12 +22,17 @@ const App = () => {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [errorMessage, setErrorMessage] = React.useState(null);
   const [movieList, setMovieList] = React.useState([]);
-
   const [isLoading, setIsLoading] = React.useState(false);
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
+  const [trendingMovies, setTrendingMovies] = useState([]);
 
   //debounced search term to limit API calls by waiting for user to stop typing for 500ms
-  useDebounce( () => {setDebouncedSearchTerm(searchTerm); ms:500, [searchTerm]});
+  useDebounce(
+    () => setDebouncedSearchTerm(searchTerm),
+    800,
+    [searchTerm]
+  );
+
   /**************************************
           MENTION IN INTERVIEWS
    **************************************/
@@ -87,7 +67,10 @@ const App = () => {
       }  
 
       setMovieList(data.results || []);
-      updateSearchCount();
+      if(query && data.results.length > 0) {
+        await updateSearchCount(query, data.results[0]);
+      }
+
     } catch (error) {
       console.error("Error fetching movies:", error);
       setErrorMessage("Failed to fetch movies. Please try again later.");
@@ -96,9 +79,21 @@ const App = () => {
     }
   };
 
+  const fetchTrendingMovies = async () => {
+    try {
+      const movies = await getTrendingMovies();
+      setTrendingMovies(movies);
+    } catch(error)
+      { console.error(`Error fetching trending movies: ${error}`);  
+  }  }
+
   useEffect(() => {
     fetchMovies(debouncedSearchTerm);
   }, [debouncedSearchTerm]);
+
+  useEffect(() => {
+    fetchTrendingMovies();
+  }, []);
 
   return (
     <main>
@@ -109,8 +104,23 @@ const App = () => {
         <h1 className="text-4xl md:text-6xl font-bold" >Find <span className="text-gradient">Movies</span> You'll Enjoy!</h1>
         <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
       </header>
+
+      {trendingMovies.length > 0 && (
+          <section className="trending">
+            <h2>Trending Movies</h2>
+            <ul>
+              {trendingMovies.map((movie, index) => (
+                <li key={movie.$id}>
+                  <p>{index + 1}</p>
+                  <img src={movie.poster_url} alt={movie.title} />
+                  <span>{movie.searchTerm}</span>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       <section className = "all-movies" >
-        <h2 className="mt-[30px] text-2xl">All Movies</h2>
+        <h2>All Movies</h2>
         {isLoading ? (
           <LoadingSpinner />
         ) : errorMessage ? (
@@ -127,5 +137,4 @@ const App = () => {
     </main>
   )
 }
-
 export default App
