@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "homepage": "https://IMRAN-Anisha.github.io/REACT-APP-Projects",
+  "homepage": "https://IMRAN-Anisha.github.io/Movie-App-ReactJS",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
